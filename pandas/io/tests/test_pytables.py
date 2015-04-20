@@ -4620,28 +4620,30 @@ class TestHDFStore(tm.TestCase):
         df = DataFrame(columns=[5, 10], data=[[1, 0]])
 
         with ensure_clean_path(self.path) as path:
-            df.to_hdf(path, 'df', format='table')
+            df.to_hdf(path, 'df', format='table', data_columns=True)
             other = read_hdf(path, 'df')
             tm.assert_frame_equal(df, other)
             self.assertTrue(df.equals(other))
             self.assertTrue(other.equals(df))
 
     def test_to_hdf_integer_column_names_readback(self):
+        # GH9057
         df = DataFrame(columns=[5, 10], data=[[1, 0]])
         s = Series([1])
 
         with ensure_clean_path(self.path) as path:
-            df.to_hdf(path, 'df', format='table')
+            df.to_hdf(path, 'df', format='table', data_columns=True)
             other = read_hdf(path, 'df')
             assert assert_series_equal(df[5], other['5'])
             assert assert_series_equal(other[5], s)
 
 
     def test_to_hdf_with_unicode_column_names(self):
+        # GH9057
         df = DataFrame(columns=[u('\u1234'), u('\u2345')], data=[[1, 0]])
 
         with ensure_clean_path(self.path) as path:
-            df.to_hdf(path, 'df', format='table')
+            df.to_hdf(path, 'df', format='table', data_columns=True)
             other = read_hdf(path, 'df')
             tm.assert_frame_equal(df, other)
             self.assertTrue(df.equals(other))

@@ -3526,6 +3526,7 @@ class Table(Fixed):
         # keys to pytables columns must be strings
         for a in self.axes:
             if str(a.cname) != a.cname:
+                warnings.warn("Keys to pytables columns must be string; future access must be done with str() of the column name.")
                 d['description'][str(a.cname)] = d['description'].pop(a.cname)
 
         if complib:
