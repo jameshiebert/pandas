@@ -4615,6 +4615,38 @@ class TestHDFStore(tm.TestCase):
             store['df'] = df
             assert_frame_equal(store['df'], df)
 
+    def test_to_hdf_with_integer_column_names(self):
+        # GH9057
+        df = DataFrame(columns=[5, 10], data=[[1, 0]])
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path, 'df', format='table')
+            other = read_hdf(path, 'df')
+            tm.assert_frame_equal(df, other)
+            self.assertTrue(df.equals(other))
+            self.assertTrue(other.equals(df))
+
+    def test_to_hdf_integer_column_names_readback(self):
+        df = DataFrame(columns=[5, 10], data=[[1, 0]])
+        s = Series([1])
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path, 'df', format='table')
+            other = read_hdf(path, 'df')
+            assert assert_series_equal(df[5], other['5'])
+            assert assert_series_equal(other[5], s)
+
+
+    def test_to_hdf_with_unicode_column_names(self):
+        df = DataFrame(columns=[u('\u1234'), u('\u2345')], data=[[1, 0]])
+
+        with ensure_clean_path(self.path) as path:
+            df.to_hdf(path, 'df', format='table')
+            other = read_hdf(path, 'df')
+            tm.assert_frame_equal(df, other)
+            self.assertTrue(df.equals(other))
+            self.assertTrue(other.equals(df))
+
 
 def _test_sort(obj):
     if isinstance(obj, DataFrame):
@@ -4623,28 +4655,6 @@ def _test_sort(obj):
         return obj.reindex(major=sorted(obj.major_axis))
     else:
         raise ValueError('type not supported here')
-
-class TestToHdfWithIntegerColumnNames(tm.TestCase):
-    # GH9057
-    def setUp(self):
-        N = 2
-        array = np.random.randint(0,8, size=N*N).astype('uint8').reshape(N,-1)
-        df = DataFrame(array, index=pd.date_range('20130206',
-                                                  periods=N,freq='ms'))
-
-        self.filename = NamedTemporaryFile(suffix='.h5', delete=False).name
-        df.to_hdf(self.filename,'df', mode='w', format='table',
-                  data_columns=True)
-
-    def test_file_is_openable(self):
-
-        with tables.open_file(self.filename, 'r') as myfile:
-            stuff = myfile.root.df
-            assert stuff
-
-    def tearDown(self):
-        os.remove(self.filename)
-
 
 if __name__ == '__main__':
     import nose
